@@ -108,28 +108,25 @@ Pour configurer la box, on se retrouve dans le menu `DynDNS` où il est possible
 
 Après avoir redémarré la box, nous pouvons y accèder depuis l'extérieur du réseau !
 
-### II- Accès SSH et installation de Git sur la Raspberry
-
-Pour activer SSH sur la Raspberry `sudo raspi-config` -> `Interfacing Options` -> `SSH` -> `Yes` -> `Finish`.
-Pour on l'active `sudo systemctl enable ssh`
+### II- Mise en place de Git sur la Raspberry
+La noyau de notre projet est évidemment le logiciel de versionning `git`. Il nous faut absolument l'installer sur la machine : `sudo apt install git`
 
 ### III- Configuration Gitea & Nginx
 
--   Création gitea use :
-    ```
-    sudo adduser --disabled-login --gecos 'Gitea' git
-    ```
--   Installation gitea :
-    ```
-    wget -O gitea https://dl.gitea.io/gitea/1.4.0/gitea-1.10.0-linux-arm-6
-    ```
+-   Création de l'user associé à Gitea :
+    `sudo adduser --disabled-login --gecos 'Gitea' git`
+
+-   Téléchargement et installation de Gitea :
+    `wget -O gitea https://dl.gitea.io/gitea/1.4.0/gitea-1.10.0-linux-arm-6`
+
 -   Le rendre executable :
-    ```
-    chmod +x gitea
-    ```
--   Configuration du service gitea :
+    `chmod +x gitea`
+
+-   Configuration du service Gitea :
 
     ```
+    // /etc/systemd/system/gitea.service
+
     [Unit]
     Description=Gitea
     After=syslog.target
@@ -155,22 +152,18 @@ Pour on l'active `sudo systemctl enable ssh`
     WantedBy=multi-user.target
     ```
 
--   Lancement de gitea :
+-   Activation et lancement de Gitea :
     ```
     sudo systemctl enable gitea
     sudo systemctl start gitea
     ```
--   Installer Nginx :
-    ```
-    sudo apt-get install nginx -y
-    ```
--   Modifications fichiers de configuration :
+-   Installation de Nginx :
+    `sudo apt-get install nginx -y`
 
+-   Modifications du fichier de configuration :
     ```
-    /etc/nginx/sites-available/gitea
-    ```
+    // /etc/nginx/sites-available/gitea
 
-    ```
     server {
         listen 443 ssl;
         server_name rpi-git myraspberry.sytes.net;
@@ -195,23 +188,26 @@ Pour on l'active `sudo systemctl enable ssh`
     }
     ```
 
--   Activer gitea avec nginx :
+-   Activation de Gitea avec nginx :
     ```
     sudo ln -s /etc/nginx/sites-available/gitea /etc/nginx/sites-enabled/gitea
     sudo rm /etc/nginx/sites-enabled/default
     sudo service nginx restart
     ```
--   Activation du certificat ssl :
+
+-   Téléchargement et activation du certificat SSL :
     ```
     wget https://dl.eff.org/certbot-auto
     chmod a+x certbot-auto
     sudo ./certbot-auto certonly --standalone -d myraspberry.sytes.net
     ```
--   Reload certificat ssl grâce à cron tache :
-    ```
-     0 1 2 * * sudo service nginx stop && sudo /home/pi/certbot-auto renew && sudo service nginx start
-    ```
--   Redémarrage nginx pour appliquer les nouveaux parametres  :
-    ```
-    sudo service nginx restart
-    ```
+
+-   Reload certificat SSL grâce à une tâche cron (crontab) :
+    `0 1 2 * * sudo service nginx stop && sudo /home/pi/certbot-auto renew && sudo service nginx start`
+
+-   Redémarrage Nginx pour appliquer les nouveaux paramètres  :
+    `sudo service nginx restart`
+
+Nous obtenons maintenant la superbe interface tant attendue de Gitea !
+
+![40% center](ressources/interface_gitea.png)
