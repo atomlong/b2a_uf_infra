@@ -94,6 +94,7 @@ Pour connecter ma raspberry à mon réseau personnel, il faut tout d'abord édit
 
 Maintenant qu'elle est connectée, nous pouvons repérer son adresse IP avec `ifconfig` ou sur le panel d'administration de mon opérateur.
 Selon l'opérateur, l'interface est différent (et potentiellement les menus), mais le protocole est identique. Dans le un menu faisant référence au `NAT/PAT`, nous allons pouvoir ouvrir des ports à notre raspberry.
+
 Nous définissons à notre `Équipement` Raspberry un service `HTTP` avec un `Protocole` TCP sur le `Port` 80. Nous ferons de même avec un `Service` HTTPS sur le `Port` 80. Ainsi nous pouvons rediriger des requêtes web vers notre Raspberry.
 
 Néanmoins, nous ne pouvons y accèder que dans le même réseau. Il faut mettre en place un `DynDNS`.
@@ -102,13 +103,15 @@ Néanmoins, nous ne pouvons y accèder que dans le même réseau. Il faut mettre
 Ce service permet de donner à un DNS (associe une IP à une adresse URL) à une adresse dynamique.
 
 Nous utiliserons ce service sur https://noip.com qui le fourni gratuitement. Après avoir créée un compte, nous pouvons choisir un nom de domaine, qui sera : https://myraspberry.sytes.net . Il faut maintenant retourner dans le panel d'administration de mon réseau pour reliée la box à ce compte.
+
 Pour configurer la box, on se retrouve dans le menu `DynDNS` où il est possible d'y ajouter une règle. Dans laquelle nous définissons notre `Service` sur no-ip et fournissons le nom de domaine choisi et les informations relatives au compte demandées.
 
 Après avoir redémarré la box, nous pouvons y accèder depuis l'extérieur du réseau !
 
-### II- Accès ssh et installation de Git sur la Raspberry
+### II- Accès SSH et installation de Git sur la Raspberry
 
-
+Pour activer SSH sur la Raspberry `sudo raspi-config` -> `Interfacing Options` -> `SSH` -> `Yes` -> `Finish`.
+Pour on l'active `sudo systemctl enable ssh`
 
 ### III- Configuration Gitea & Nginx
 
