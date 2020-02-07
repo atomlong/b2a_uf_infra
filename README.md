@@ -211,7 +211,7 @@ Pour on l'active `sudo systemctl enable ssh`
     ```
      0 1 2 * * sudo service nginx stop && sudo /home/pi/certbot-auto renew && sudo service nginx start
     ```
--   Activation nginx :
+-   Redémarrage nginx pour appliquer les nouveaux parametres  :
     ```
     sudo service nginx restart
     ```
