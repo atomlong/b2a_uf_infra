@@ -214,7 +214,7 @@ Nous obtenons maintenant la superbe interface tant attendue de Gitea !
 
 Pour conclure, une dernière configuration est nécessaire. Configuration dans laquelle nous définirons la connexion à la base de données ainsi que notre nom de domaine en tant que chemin principal.
 
-Nous retrouverons cette configuration dans le fichier `/home/git/custom/conf/[app.ini](ressources/app.ini)`. Le fait déeffacer ce fichier nous permettra de reconfigurer notre serveur Gitea.
+Nous retrouverons cette configuration dans le fichier `/home/git/custom/conf/`[app.ini](ressources/app.ini). Le fait d'effacer ce fichier nous permettra de reconfigurer notre serveur Gitea.
 
 ##### Liens ressources
 
