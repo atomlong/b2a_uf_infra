@@ -211,3 +211,13 @@ La noyau de notre projet est évidemment le logiciel de versionning `git`. Il no
 Nous obtenons maintenant la superbe interface tant attendue de Gitea !
 
 ![40% center](ressources/interface_gitea.png)
+
+Pour conclure, une dernière configuration est nécessaire. Configuration dans laquelle nous définirons la connexion à la base de données ainsi que notre nom de domaine en tant que chemin principal.
+
+Nous retrouverons cette configuration dans le fichier `/home/git/custom/conf/[app.ini](ressources/app.ini)`. Le fait déeffacer ce fichier nous permettra de reconfigurer notre serveur Gitea.
+
+##### Liens ressources
+
+https://pimylifeup.com/raspberry-pi-gitea/
+https://raspberry-pi.fr/mettre-en-ligne-serveur-web-raspbian-dydns-port-forwarding/
+https://www.sitepoint.com/setting-up-your-raspberry-pi-as-a-git-server/
