@@ -2,7 +2,7 @@
 
 ## Théo
 
-### Sécuriser l'accès SSH
+## Sécuriser l'accès SSH : **RASPBERRY**
 
 https://community.gladysassistant.com/t/tutoriel-securiser-lacces-ssh-sur-votre-raspberry/2157
 
@@ -52,6 +52,8 @@ https://community.gladysassistant.com/t/tutoriel-securiser-lacces-ssh-sur-votre-
         sudo systemctl restart ssh
         ```
 
+---
+
 -   Authentification par clés SSH
 
     -   Sur **HOST** :
@@ -86,10 +88,151 @@ https://community.gladysassistant.com/t/tutoriel-securiser-lacces-ssh-sur-votre-
 
     On est maintenant obligé de se connecté au serveur avec nos clés privé, sinon l'accès est refusé
 
+---
+
+## Fail2ban
+
+_Permet de bannir une IP qui echoue en boucle à se connecter au serveur en ssh, à un site ..._
+
+-   Installer fail2ban :
+    ```
+    sudo apt-get install fail2ban
+    ```
+-   Copier le fichier `jail.conf` afin de configurer ses propres options (il ne faut pas modifier le `jail.conf` directement) :
+    ```
+    sudo cp /etc/fail2ban/jail.con /etc/fail2ban/jail.local
+    ```
+-   Modifier un fichier de configuration pour surcharger la configuration de fail2ban :
+
+    ```
+    sudo nano /etc/fail2ban/jail.d/defaults-debian.conf
+    ```
+
+    ```
+    [DEFAULT] (section pour tous les plugins)
+    ignoreip = 127.0.0.1/8 XX.XX.XX.XX (son IP pour ne pas se faire bannir)
+
+    [sshd]
+    enabled = true
+    port = ssh #(le port ssh)
+    maxrtry = 5 #(nombre de tentatives avant le bannissement)
+    bantime = 600 #(temps de banissement en secondes)
+    findtime = 600 #(interval durant lequel "maxretry" sera pris en compte avant de se faire bannir son IP)
+    logpath = /var/log/auth.log #(fichier que fail2ban va regarder pour vérifier les connexions et surtout les echecs)
+
+    ```
+
+-   Relancer le serveur fail2ban
+
+    ```
+    sudo systemctl restart fail2ban
+    ```
+
+-   Vérifier les jails lancées
+    ```
+    sudo fail2ban-client status
+    ```
+-   Vérifier les IPs ban
+    ```
+    sudo fail2ban-client sshd
+    ```
+
+### Sécuriser l'accès SSH : **SERVEUR DEBIAN**
+
+https://korben.info/tuto-ssh-securiser.html
+
+-   Copier le fichier de configuration SSH (au cas ou hein)
+
+    ```
+    $ cd /etc/ssh
+    $ sudo cp sshd_config sshd_config.orig
+    ```
+
+-   Dans le fichier de config `/etc/ssh/sshd_config`
+
+    -   Modifier le port d'ecoute de SSH _(22 par défaut)_ :  
+        Port SSH passé sur le port **2222**
+
+    -   Établir un temps pour se connecter :  
+        `LoginGraceTime 30` (30sec pour se connecter avant fermeture du SSH)
+
+    -   Nombre de tentative de mot de passe avant fermeture SSH :  
+        `MaxAuthTries 1` (1 erreur et SSH fermé)
+
+    -   Redemarrer le service SSH
+        ```
+        sudo service ssh restart
+        ```
+
+---
+
+-   Authentification par clés SSH
+
+    -   Sur **SERVEUR** :
+
+        -   Créer le répertoire `.ssh` dans note `HOME` qui accueillera un fichier contenant les clés SSH
+
+            ```
+            mkdir ~/.ssh
+            ```
+
+        -   Changer les droits d'accès de ce répertoire
+            ```
+            chmod 0700 ~/.ssh
+            ```
+            Ceci permet au propriétaire du fichier de tout faire (7), et restreint les droits aux autres
+
+
+    -   Sur **HOST** :
+
+        -   Créer une paire de clés publique et privé sur le host
+
+            ```
+            ssh-keygen -t rsa -b 2048 -C "Un commentaire pour vous aider à identifier votre clé"
+            ```
+
+        -   Copier la clé publique sur le serveur
+            ```
+            cd ~/.ssh
+            scp id_rsa.pub user@10.33.15.37:~/.ssh/authorized_keys
+            ```
+
+        - On rechange les droits sur le répertoire qui contient les clés
+            ```
+            chmod 0600 ~/.ssh/*
+    	    ```
+            Permet au propriétaire de lire et écrire, mais pas d'executer
+
+        -   Dans le fichier `/etc/ssh/sshd_config` :
+            - Indiquer au serveur SSH où se trouvent les clés et lui dire qu'on va les utiliser comme méthode d'authentification
+                ```
+                PubkeyAuthentication yes
+                AuthorizedKeysFile .ssh/authorized_keys
+                ```
+
+            - Désactiver toutes les autres méthodes d'authentification
+                ```
+                UsePAM no
+                KerberosAuthentication no
+                GSSAPIAuthentication no
+                PasswordAuthentication no
+                ```
+        -   Redemarrer le service SSH
+            ```
+            sudo /etc/init.d/ssh restart
+            ```
+
+
+
+
+    On est maintenant obligé de se connecté au serveur avec nos clés privé, sinon l'accès est refusé
+
 ## Maxime
 
 ### I- Connexion à la raspberry à distance
+
 #### Local
+
 Pour connecter ma raspberry à mon réseau personnel, il faut tout d'abord éditer le fichier [wpa_supplicant.conf](connexion_raspberry/wap_supplicant.conf) avec les informations relatives à mon réseau.
 
 Maintenant qu'elle est connectée, nous pouvons repérer son adresse IP avec `ifconfig` ou sur le panel d'administration de mon opérateur.
@@ -100,6 +243,7 @@ Nous définissons à notre `Équipement` Raspberry un service `HTTP` avec un `Pr
 Néanmoins, nous ne pouvons y accèder que dans le même réseau. Il faut mettre en place un `DynDNS`.
 
 #### DynDNS
+
 Ce service permet de donner à un DNS (associe une IP à une adresse URL) à une adresse dynamique.
 
 Nous utiliserons ce service sur https://noip.com qui le fourni gratuitement. Après avoir créée un compte, nous pouvons choisir un nom de domaine, qui sera : https://myraspberry.sytes.net . Il faut maintenant retourner dans le panel d'administration de mon réseau pour reliée la box à ce compte.
@@ -109,6 +253,7 @@ Pour configurer la box, on se retrouve dans le menu `DynDNS` où il est possible
 Après avoir redémarré la box, nous pouvons y accèder depuis l'extérieur du réseau !
 
 ### II- Mise en place de Git sur la Raspberry
+
 La noyau de notre projet est évidemment le logiciel de versionning `git`. Il nous faut absolument l'installer sur la machine : `sudo apt install git`
 
 ### III- Configuration Gitea & Nginx
@@ -161,6 +306,7 @@ La noyau de notre projet est évidemment le logiciel de versionning `git`. Il no
     `sudo apt-get install nginx -y`
 
 -   Modifications du fichier de configuration :
+
     ```
     // /etc/nginx/sites-available/gitea
 
@@ -189,6 +335,7 @@ La noyau de notre projet est évidemment le logiciel de versionning `git`. Il no
     ```
 
 -   Activation de Gitea avec nginx :
+
     ```
     sudo ln -s /etc/nginx/sites-available/gitea /etc/nginx/sites-enabled/gitea
     sudo rm /etc/nginx/sites-enabled/default
@@ -196,6 +343,7 @@ La noyau de notre projet est évidemment le logiciel de versionning `git`. Il no
     ```
 
 -   Téléchargement et activation du certificat SSL :
+
     ```
     wget https://dl.eff.org/certbot-auto
     chmod a+x certbot-auto
@@ -205,7 +353,7 @@ La noyau de notre projet est évidemment le logiciel de versionning `git`. Il no
 -   Reload certificat SSL grâce à une tâche cron (crontab) :
     `0 1 2 * * sudo service nginx stop && sudo /home/pi/certbot-auto renew && sudo service nginx start`
 
--   Redémarrage Nginx pour appliquer les nouveaux paramètres  :
+-   Redémarrage Nginx pour appliquer les nouveaux paramètres :
     `sudo service nginx restart`
 
 Nous obtenons maintenant la superbe interface tant attendue de Gitea !
