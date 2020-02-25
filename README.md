@@ -1,5 +1,117 @@
 # b2a_uf_infra
 
+## Protocole de déploiement
+
+### Cloner le répertoire
+Toutes les ressources nécessaires au déploiement du projet se trouve dans le repo. Vous pouvez donc simplement executer la commande : `git clone https://github.com/maximelarrieu/b2a_uf_infra`.
+
+### Fichiers docker-compose
+Deux fichier de configuration de docker sont à votre disposition.
+
+[docker-compose.yml](/docker-compose.yml) est à configurer selon où vous voulez déployer le projet. En local ou sur votre propre serveur privé.
+
+[docker-compose-example.yml](/docker-compose-example.yml) est le fichier déjà configuré que nous utilisons pour déployer le projet sur notre serveur privé Ynov.
+
+Ces deux fichiers permettent de créer et de déployer les conteneurs nécessaires au projet.
+
+### Création et déploiement des conteneurs
+Une fois le `docker-compose.yml` configuré, vous pouvez l'exécuter.
+
+```
+$ sudo docker-compose up -d
+Creating network "b2a_uf_infra_gitea" with the default driver
+Creating network "b2a_uf_infra_default" with the default driver
+Creating volume "b2a_uf_infra_gitea-app" with default driver
+Creating volume "b2a_uf_infra_gitea-db" with default driver
+Pulling gitea-db (postgres:9.6)...
+9.6: Pulling from library/postgres
+619014d83c02: Pull complete
+7ec0fe6664f6: Pull complete
+...
+b16493153120: Pull complete
+690cca3ebd5e: Pull complete
+Digest: sha256:c404895297aeb6ee6a9fbab874c534b0d20891207ed4d635a68076ce6d64425a
+Status: Downloaded newer image for postgres:9.6
+Pulling gitea-gui (gitea/gitea:latest)...
+latest: Pulling from gitea/gitea
+c9b1b535fdd9: Pull complete
+b23cc1e06fde: Pull complete
+...
+0661aaf8b4a0: Pull complete
+Digest: sha256:1c12a2146cf991eba3538c7e01165558823db83a0472a85b5377ea38456cfbaa
+Status: Downloaded newer image for gitea/gitea:latest
+Creating b2a_uf_infra_gitea-db_1 ... done
+Creating b2a_uf_infra_gitea-gui_1 ... done
+Creating b2a_uf_infra_drone-gui_1 ... done
+Creating b2a_uf_infra_drone-runner-docker_1 ... done
+```
+L'execution récupère dans un premier temps les images demandées par les conteneurs, puis les conteneurs sont créées. Nous pouvons les voir en executant :
+```
+$ sudo docker ps -a
+CONTAINER ID        IMAGE                              COMMAND                  CREATED             STATUS              PORTS                                         NAMES
+c5c714dd2567        drone/drone-runner-docker:latest   "/bin/drone-runner-d…"   4 minutes ago       Up 4 minutes        3000/tcp                                      b2a_uf_infra_drone-runner-docker_1
+fd2ea7062bb7        drone/drone:1.6.2                  "/bin/drone-server"      4 minutes ago       Up 4 minutes        80/tcp, 443/tcp, 0.0.0.0:8000->8000/tcp       b2a_uf_infra_drone-gui_1
+4ce3ee660303        gitea/gitea:latest                 "/usr/bin/entrypoint…"   4 minutes ago       Up 4 minutes        0.0.0.0:3000->3000/tcp, 0.0.0.0:222->22/tcp   b2a_uf_infra_gitea-gui_1
+4187d26d7996        postgres:9.6                       "docker-entrypoint.s…"   4 minutes ago       Up 4 minutes        5432/tcp                                      b2a_uf_infra_gitea-db_1
+```
+
+### Accès à l'interface Gitea
+Selon la configuration donnée dans les conteneurs, nous pouvons accèder tout d'abord à l'interface Gitea en passant par l'URL fournie à la ligne `ROOT_URL=`. Dans notre cas, nous pouvons y accèder via `http://10.33.15.37:3000`.
+
+_Page d'accueil_
+![40% center](ressources/interface_gitea.png)
+
+Par la suite, en accèdant à `S'inscrire` (ou n'importe quel autre menu), nous obtiendrons une page de configuration de Gitea.
+_Page de configuration de Gitea_
+![40% center](ressources/configuration_gitea.png)
+
+Les champs sont déjà pré-remplis grâce aux informations fournies dans notre fichier [docker-compose.yml](/docker-compose-example.yml).
+Il nous suffit alors de valider le formulaire `Installer Gitea`.
+
+### Création du compte Gitea et mise en place de l'application OAuth2 Drone
+Depuis votre interface Gitea, cliquez sur votre profil et sélectionnez `Application`.
+Rendez-vous au dernier formulaire proposé où vous pourrez commencer à configurer Drone.
+
+_Formulaire OAuth2 Application
+![40% center](ressources/oauth2_gitea.png)
+Tout d'abord, donnez un nom à votre application. Puis dans le l'URL de redirection, réutiliser l'URL configuré dans le fichier [docker-compose.yml](/docker-compose-example.yml) avec cette fois-ci comme port `:8000` ainsi que `/login`. Cette route, permettra, une fois le lien fait entre nom compte Gitea et Drone, vous serez redirigez vers cette URL.
+
+_Formulaire des identifiants pour Drone_ 
+A la validation du formulaire, vous obtiendez des informations complémentaires.
+![40% center](ressources/configuration_oauth2_gitea.png)
+
+Il vous faudra coller le champs `ID du client` que vous collerez à la ligne `DRONE_GITEA_CLIENT_ID=`.
+Faire de même avec le champs `Secret du client` que vous collez à la ligne `DRONE_GITEA_CLIENT_SECRET`. Fait ? Il ne vous reste plus qu'à `Enregistrer` le formulaire.
+
+### Accès à l'interface Drone
+Premièrement, il faut d'abord relancer le fichier [docker-compose.yml](/docker-compose-example.yml).
+```
+$ sudo docker-compose up -d
+b2a_uf_infra_gitea-db_1 is up-to-date
+b2a_uf_infra_gitea-gui_1 is up-to-date
+Recreating b2a_uf_infra_drone-gui_1 ... done
+Recreating b2a_uf_infra_drone-runner-docker_1 ... done
+```
+On peut voir que seulement les conteneurs Drone se mettent à jour. Ils récupèrent les informations concernant le compte Gitea auquel se lier.
+
+Pour obtenir un aperçu un peu plus parlant, je vous invite à créer un repository 'test' dans Gitea.
+
+Désormais, vous pouvez accèder à votre interface Drone en remplaçant le port `3000` utilisé par Gitea, par le port `8000` qu'utilise donc.. Drone.
+
+_Page d'accès à Drone_
+![40% center](ressources/access_drone.png)
+Sur cette nouvelle page, si les identifiants renseignés au prélable sont bons, vous pourrez voir `Cette application a été créée par @votregiteauser.` ainsi que la redirection, elle aussi renseignée au moment de la création de l'application OAuth2.
+
+Après avoir `Accepter l'application`, vous accèderez à l'interface Drone.
+![40% center](ressources/interface_drone.png)
+
+Vous retrouverez le repository créée plus tôt, repo que vous pouvez d'ores et déjà l'activer.
+
+### Configuration d'une pipeline Drone
+Je vous invite désormais à créer un fichier à la racine de votre repository, que vous nommerez [.drone.yml](/.drone_example.yml).
+
+A COMPLETER SUR SERVEUR
+
 ## Théo
 
 ## Sécuriser l'accès SSH : **RASPBERRY**
