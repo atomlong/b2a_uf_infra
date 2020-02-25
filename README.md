@@ -62,6 +62,7 @@ _Page d'accueil_
 ![40% center](ressources/interface_gitea.png)
 
 Par la suite, en accèdant à `S'inscrire` (ou n'importe quel autre menu), nous obtiendrons une page de configuration de Gitea.
+
 _Page de configuration de Gitea_
 ![40% center](ressources/configuration_gitea.png)
 
@@ -72,12 +73,14 @@ Il nous suffit alors de valider le formulaire `Installer Gitea`.
 Depuis votre interface Gitea, cliquez sur votre profil et sélectionnez `Application`.
 Rendez-vous au dernier formulaire proposé où vous pourrez commencer à configurer Drone.
 
-_Formulaire OAuth2 Application
+_Formulaire OAuth2 Application_
 ![40% center](ressources/oauth2_gitea.png)
+
 Tout d'abord, donnez un nom à votre application. Puis dans le l'URL de redirection, réutiliser l'URL configuré dans le fichier [docker-compose.yml](/docker-compose-example.yml) avec cette fois-ci comme port `:8000` ainsi que `/login`. Cette route, permettra, une fois le lien fait entre nom compte Gitea et Drone, vous serez redirigez vers cette URL.
 
-_Formulaire des identifiants pour Drone_ 
 A la validation du formulaire, vous obtiendez des informations complémentaires.
+
+_Formulaire des identifiants pour Drone_ 
 ![40% center](ressources/configuration_oauth2_gitea.png)
 
 Il vous faudra coller le champs `ID du client` que vous collerez à la ligne `DRONE_GITEA_CLIENT_ID=`.
@@ -100,9 +103,12 @@ Désormais, vous pouvez accèder à votre interface Drone en remplaçant le port
 
 _Page d'accès à Drone_
 ![40% center](ressources/access_drone.png)
+
 Sur cette nouvelle page, si les identifiants renseignés au prélable sont bons, vous pourrez voir `Cette application a été créée par @votregiteauser.` ainsi que la redirection, elle aussi renseignée au moment de la création de l'application OAuth2.
 
 Après avoir `Accepter l'application`, vous accèderez à l'interface Drone.
+
+_Interface Drone_
 ![40% center](ressources/interface_drone.png)
 
 Vous retrouverez le repository créée plus tôt, repo que vous pouvez d'ores et déjà l'activer.
