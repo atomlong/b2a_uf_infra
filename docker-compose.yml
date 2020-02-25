@@ -1,12 +1,8 @@
 version: "3"
 
-networks:
-  gitea:
-    external: false
-
 services:
   gitea-gui:
-    image: gitea/gitea:latest
+    image: gitea/gitea:1.10.0
     environment:
       - USER_UID=1000
       - USER_GID=1000
@@ -17,8 +13,6 @@ services:
       - DB_USER=gitea
       - DB_PASSWD=gitea
     restart: always
-    networks:
-      - gitea
     volumes:
       - ./gitea:/data
       - /etc/timezone:/etc/timezone:ro
@@ -26,20 +20,20 @@ services:
     ports:
       - "3000:3000"
       - "222:22"
-    depends_on:
+    links:
       - gitea-db
 
   gitea-db:
-    image: postgres:9.6
+    image: postgres:alpine
     restart: always
     environment:
       - POSTGRES_USER=gitea
       - POSTGRES_PASSWORD=gitea
       - POSTGRES_DB=gitea
-    networks:
-      - gitea
     volumes:
       - ./postgres:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
 
   drone-gui:
     image: drone/drone:1.6.2
@@ -88,4 +82,3 @@ services:
 volumes:
   gitea-app:
   gitea-db:
-
