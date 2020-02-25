@@ -1,0 +1,91 @@
+version: "3"
+
+networks:
+  gitea:
+    external: false
+
+services:
+  server:
+    image: gitea/gitea:latest
+    environment:
+      - USER_UID=1000
+      - USER_GID=1000
+      - ROOT_URL=http://10.33.15.37:3000
+      - DB_TYPE=postgres
+      - DB_HOST=db:5432
+      - DB_NAME=gitea
+      - DB_USER=gitea
+      - DB_PASSWD=gitea
+    restart: always
+    networks:
+      - gitea
+    volumes:
+      - ./gitea:/data
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    ports:
+      - "3000:3000"
+      - "222:22"
+    depends_on:
+      - db
+
+  db:
+    image: postgres:9.6
+    restart: always
+    environment:
+      - POSTGRES_USER=gitea
+      - POSTGRES_PASSWORD=gitea
+      - POSTGRES_DB=gitea
+    networks:
+      - gitea
+    volumes:
+      - ./postgres:/var/lib/postgresql/data
+
+  drone-gui:
+    image: drone/drone:1.6.2
+    ports:
+      - 8000:8000
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./volumes/drone:/var/lib/drone/
+    restart: always
+    depends_on:
+      - server
+    links:
+      - server
+    environment:
+      - DRONE_AGENTS_ENABLED=true
+      - DRONE_GITEA_CLIENT_ID=d04985a9-18be-43cc-a93b-bed991a1928e
+      - DRONE_GITEA_CLIENT_SECRET=1p8gTEv6WGJ15RLM_9OyFkc_oczsfjatBeVUNjc3lfU=
+      - DRONE_GITEA_SERVER=http://10.33.15.37:3000
+      - DRONE_GIT_ALWAYS_AUTH=false
+      - DRONE_TLS_AUTOCERT=false
+      - DRONE_SERVER_PORT=:8000
+      - DRONE_SERVER_HOST=10.33.15.37:8000
+      - DRONE_SERVER_PROTO=http
+      - DRONE_RPC_SECRET=secret
+      - DRONE_RUNNER_NETWORKS=gitea-drone_default
+
+  drone-runner-docker:
+    image: drone/drone-runner-docker:latest
+    restart: always
+    depends_on:
+      - drone-gui
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    links:
+      - drone-gui
+      - server
+    environment:
+      - DRONE_RPC_HOST=10.33.15.37:8000
+      - DRONE_RPC_PROTO=http
+      - DRONE_RPC_SECRET=secret
+      - DRONE_RUNNER_NAME=drone-runner-docker
+      - DRONE_UI_USERNAME=test
+      - DRONE_UI_PASSWORD=test
+      - DRONE_RUNNER_NETWORKS=gitea-drone_default
+
+volumes:
+  gitea-app:
+  gitea-db:
+
