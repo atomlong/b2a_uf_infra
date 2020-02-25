@@ -10,7 +10,7 @@ Deux fichier de configuration de docker sont à votre disposition.
 
 [docker-compose.yml](/docker-compose.yml) est à configurer selon où vous voulez déployer le projet. En local ou sur votre propre serveur privé.
 
-[docker-compose-example.yml](/docker-compose-example.yml) est le fichier déjà configuré que nous utilisons pour déployer le projet sur notre serveur privé Ynov.
+[docker-compose-example.yml](/docker-compose-example.yml) est le fichier déjà configuré que nous utilisons pour déployer le projet sur notre serveur privé Ynov. Les informations à modifier se trouvent entre <Informations à modifiers>
 
 Ces deux fichiers permettent de créer et de déployer les conteneurs nécessaires au projet.
 
