@@ -1,47 +1,41 @@
 version: "3"
 
-networks:
-  gitea:
-    external: false
-
 services:
-  server:
-    image: gitea/gitea:latest
+
+  gitea:
+    image: gitea/gitea:1.10.0
     environment:
       - USER_UID=1000
       - USER_GID=1000
       - ROOT_URL=http://10.33.15.37:3000
       - DB_TYPE=postgres
-      - DB_HOST=db:5432
+      - DB_HOST=gitea-db:5432
       - DB_NAME=gitea
-      - DB_USER=gitea
-      - DB_PASSWD=gitea
+      - DB_USER=postgres
+      - DB_PASSWD=postgres
+      - SKIP_TLS_VERIFY=true
     restart: always
-    networks:
-      - gitea
     volumes:
-      - ./gitea:/data
-      - /etc/timezone:/etc/timezone:ro
-      - /etc/localtime:/etc/localtime:ro
+      - ./volumes/gitea-app:/data
+    links:
+      - gitea-db
     ports:
-      - "3000:3000"
-      - "222:22"
-    depends_on:
-      - db
+      - 22:22
+      - 3000:3000
 
-  db:
-    image: postgres:9.6
+  gitea-db:
+    image: postgres:alpine
+    ports:
+      - 5432:5432
     restart: always
-    environment:
-      - POSTGRES_USER=gitea
-      - POSTGRES_PASSWORD=gitea
-      - POSTGRES_DB=gitea
-    networks:
-      - gitea
     volumes:
-      - ./postgres:/var/lib/postgresql/data
+      - ./volumes/gitea-db:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=gitea
 
-  drone-gui:
+  drone:
     image: drone/drone:1.6.2
     ports:
       - 8000:8000
@@ -50,13 +44,13 @@ services:
       - ./volumes/drone:/var/lib/drone/
     restart: always
     depends_on:
-      - server
+      - gitea
     links:
-      - server
+      - gitea
     environment:
       - DRONE_AGENTS_ENABLED=true
-      - DRONE_GITEA_CLIENT_ID=d04985a9-18be-43cc-a93b-bed991a1928e
-      - DRONE_GITEA_CLIENT_SECRET=1p8gTEv6WGJ15RLM_9OyFkc_oczsfjatBeVUNjc3lfU=
+      - DRONE_GITEA_CLIENT_ID=48d142e5-b2d3-4ef5-9c00-d0739e4ab54c
+      - DRONE_GITEA_CLIENT_SECRET=AWtyq6JlFTp6vmnmcAWRfCc_7qPuemboan55MBHAnm4=
       - DRONE_GITEA_SERVER=http://10.33.15.37:3000
       - DRONE_GIT_ALWAYS_AUTH=false
       - DRONE_TLS_AUTOCERT=false
@@ -70,12 +64,12 @@ services:
     image: drone/drone-runner-docker:latest
     restart: always
     depends_on:
-      - drone-gui
+      - drone
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     links:
-      - drone-gui
-      - server
+      - drone
+      - gitea
     environment:
       - DRONE_RPC_HOST=10.33.15.37:8000
       - DRONE_RPC_PROTO=http
@@ -85,7 +79,7 @@ services:
       - DRONE_UI_PASSWORD=test
       - DRONE_RUNNER_NETWORKS=gitea-drone_default
 
+
 volumes:
   gitea-app:
   gitea-db:
-
