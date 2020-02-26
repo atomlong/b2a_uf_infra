@@ -3,18 +3,21 @@
 ## Protocole de déploiement
 
 ### Cloner le répertoire
+
 Toutes les ressources nécessaires au déploiement du projet se trouve dans le repo. Vous pouvez donc simplement executer la commande : `git clone https://github.com/maximelarrieu/b2a_uf_infra`.
 
 ### Fichiers docker-compose
+
 Deux fichier de configuration de docker sont à votre disposition.
 
-[docker-compose.yml](/docker-compose.yml) est à configurer selon où vous voulez déployer le projet. En local ou sur votre propre serveur privé.
+[docker-compose.yml](/docker-compose.yml) est à configurer selon où vous voulez déployer le projet. En local ou sur votre propre serveur privé. Les informations à modifier se trouvent entre <Informations à modifier>
 
-[docker-compose-example.yml](/docker-compose-example.yml) est le fichier déjà configuré que nous utilisons pour déployer le projet sur notre serveur privé Ynov. Les informations à modifier se trouvent entre <Informations à modifiers>
+[docker-compose-example.yml](/docker-compose-example.yml) est le fichier déjà configuré que nous utilisons pour déployer le projet sur notre serveur privé Ynov.
 
 Ces deux fichiers permettent de créer et de déployer les conteneurs nécessaires au projet.
 
 ### Création et déploiement des conteneurs
+
 Une fois le `docker-compose.yml` configuré, vous pouvez l'exécuter.
 
 ```
@@ -45,7 +48,9 @@ Creating b2a_uf_infra_gitea-gui_1 ... done
 Creating b2a_uf_infra_drone-gui_1 ... done
 Creating b2a_uf_infra_drone-runner-docker_1 ... done
 ```
+
 L'execution récupère dans un premier temps les images demandées par les conteneurs, puis les conteneurs sont créées. Nous pouvons les voir en executant :
+
 ```
 $ sudo docker ps -a
 CONTAINER ID        IMAGE                              COMMAND                  CREATED             STATUS              PORTS                                         NAMES
@@ -56,6 +61,7 @@ fd2ea7062bb7        drone/drone:1.6.2                  "/bin/drone-server"      
 ```
 
 ### Accès à l'interface Gitea
+
 Selon la configuration donnée dans les conteneurs, vous pouvez accèder tout d'abord à l'interface Gitea en passant par l'URL fournie à la ligne `ROOT_URL=`. Dans notre cas, il est possible d'y accèder via `http://10.33.15.37:3000`.
 
 _Page d'accueil_
@@ -70,6 +76,7 @@ Les champs sont déjà pré-remplis grâce aux informations fournies dans le fic
 Il suffit alors de valider le formulaire `Installer Gitea`.
 
 ### Création du compte Gitea et mise en place de l'application OAuth2 Drone
+
 Une fois l'installation terminée. Il ne vous reste plus qu'à créer un compte Gitea.
 
 Depuis votre interface Gitea, cliquez sur votre profil et sélectionnez `Application`.
@@ -82,14 +89,16 @@ Tout d'abord, donnez un nom à votre application. Puis dans le l'URL de redirect
 
 A la validation du formulaire, vous obtiendez des informations complémentaires.
 
-_Formulaire des identifiants pour Drone_ 
+_Formulaire des identifiants pour Drone_
 ![40% center](ressources/configuration_oauth2_gitea.png)
 
 Il vous faudra coller le champs `ID du client` que vous collerez à la ligne `DRONE_GITEA_CLIENT_ID=`.
 Faire de même avec le champs `Secret du client` que vous collez à la ligne `DRONE_GITEA_CLIENT_SECRET`. Fait ? Il ne vous reste plus qu'à `Enregistrer` le formulaire.
 
 ### Accès à l'interface Drone
+
 Premièrement, il faut d'abord relancer le fichier [docker-compose.yml](/docker-compose-example.yml).
+
 ```
 $ sudo docker-compose up -d
 b2a_uf_infra_gitea-db_1 is up-to-date
@@ -97,6 +106,7 @@ b2a_uf_infra_gitea-gui_1 is up-to-date
 Recreating b2a_uf_infra_drone-gui_1 ... done
 Recreating b2a_uf_infra_drone-runner-docker_1 ... done
 ```
+
 On peut voir que seulement les conteneurs Drone se mettent à jour. Ils récupèrent les informations concernant le compte Gitea auquel se lier.
 
 Pour obtenir un aperçu un peu plus parlant, je vous invite à créer un repository 'test' dans Gitea.
@@ -116,6 +126,7 @@ _Interface Drone_
 Vous retrouverez le repository créée plus tôt, repo que vous pouvez d'ores et déjà l'activer.
 
 ### Configuration d'une pipeline Drone
+
 Je vous invite désormais à créer un fichier à la racine de votre repository, que vous nommerez [.drone.yml](/.drone.yml).
 
 Au push, Drone détectera le fichier `.drone.yml` et exécutera les tests donnés dans la section `commands`. Selon, si le(s) test(s) passe(nt), Drone renverra un `Success` ou à contrario une `Error`.
@@ -125,6 +136,8 @@ Au push, Drone détectera le fichier `.drone.yml` et exécutera les tests donné
 https://angristan.xyz/2018/08/host-your-own-ci-cd-server-with-drone/https://raspberry-pi.fr/mettre-en-ligne-serveur-web-raspbian-dydns-port-forwarding/
 https://gist.github.com/tobydeh/e85532b358d01b45789e1c3b119620ef
 https://medium.com/faun/setup-a-drone-cicd-environment-on-docker-with-letsencrypt-69b259d398fb
+
+---
 
 ## Théo
 
@@ -147,12 +160,9 @@ https://korben.info/tuto-ssh-securiser.html
     -   Établir un temps pour se connecter :  
         `LoginGraceTime 30` (30sec pour se connecter avant fermeture du SSH)
 
-    -   Nombre de tentative de mot de passe avant fermeture SSH :  
-        `MaxAuthTries 1` (1 erreur et SSH fermé)
-
     -   Redemarrer le service SSH
         ```
-        sudo service ssh restart
+        sudo /etc/init.d/ssh restart
         ```
 
 ---
@@ -200,7 +210,6 @@ https://korben.info/tuto-ssh-securiser.html
                 PubkeyAuthentication yes
                 AuthorizedKeysFile .ssh/authorized_keys
                 ```
-
             - Désactiver toutes les autres méthodes d'authentification
                 ```
                 UsePAM no
@@ -216,7 +225,7 @@ https://korben.info/tuto-ssh-securiser.html
 
 
 
-    On est maintenant obligé de se connecté au serveur avec nos clés privé, sinon l'accès est refusé
+    On est maintenant obligé de se connecter au serveur avec nos clés privé, sinon l'accès est refusé
 
 ## Fail2ban
 
@@ -226,11 +235,7 @@ _Permet de bannir une IP qui echoue en boucle à se connecter au serveur en ssh,
     ```
     sudo apt-get install fail2ban
     ```
--   Copier le fichier `jail.conf` afin de configurer ses propres options (il ne faut pas modifier le `jail.conf` directement) :
-    ```
-    sudo cp /etc/fail2ban/jail.con /etc/fail2ban/jail.local
-    ```
--   Modifier un fichier de configuration pour surcharger la configuration de fail2ban :
+-   Modifier le fichier de configuration pour surcharger la configuration de fail2ban cntenu dans le fichier `jail.conf`:
 
     ```
     sudo nano /etc/fail2ban/jail.d/defaults-debian.conf
@@ -351,7 +356,7 @@ https://community.gladysassistant.com/t/tutoriel-securiser-lacces-ssh-sur-votre-
             sudo service ssh restart
             ```
 
-    On est maintenant obligé de se connecté au serveur avec nos clés privé, sinon l'accès est refusé
+    On est maintenant obligé de se connecter au serveur avec nos clés privé, sinon l'accès est refusé
 
 ---
 
