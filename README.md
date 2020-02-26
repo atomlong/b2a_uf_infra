@@ -56,20 +56,22 @@ fd2ea7062bb7        drone/drone:1.6.2                  "/bin/drone-server"      
 ```
 
 ### Accès à l'interface Gitea
-Selon la configuration donnée dans les conteneurs, nous pouvons accèder tout d'abord à l'interface Gitea en passant par l'URL fournie à la ligne `ROOT_URL=`. Dans notre cas, nous pouvons y accèder via `http://10.33.15.37:3000`.
+Selon la configuration donnée dans les conteneurs, vous pouvez accèder tout d'abord à l'interface Gitea en passant par l'URL fournie à la ligne `ROOT_URL=`. Dans notre cas, il est possible d'y accèder via `http://10.33.15.37:3000`.
 
 _Page d'accueil_
 ![40% center](ressources/interface_gitea.png)
 
-Par la suite, en accèdant à `S'inscrire` (ou n'importe quel autre menu), nous obtiendrons une page de configuration de Gitea.
+Par la suite, en accèdant à `S'inscrire` (ou n'importe quel autre menu), vous obtiendrez une page de configuration de Gitea.
 
 _Page de configuration de Gitea_
 ![40% center](ressources/configuration_gitea.png)
 
-Les champs sont déjà pré-remplis grâce aux informations fournies dans notre fichier [docker-compose.yml](/docker-compose-example.yml).
-Il nous suffit alors de valider le formulaire `Installer Gitea`.
+Les champs sont déjà pré-remplis grâce aux informations fournies dans le fichier [docker-compose.yml](/docker-compose-example.yml).
+Il suffit alors de valider le formulaire `Installer Gitea`.
 
 ### Création du compte Gitea et mise en place de l'application OAuth2 Drone
+Une fois l'installation terminée. Il ne vous reste plus qu'à créer un compte Gitea.
+
 Depuis votre interface Gitea, cliquez sur votre profil et sélectionnez `Application`.
 Rendez-vous au dernier formulaire proposé où vous pourrez commencer à configurer Drone.
 
@@ -114,146 +116,17 @@ _Interface Drone_
 Vous retrouverez le repository créée plus tôt, repo que vous pouvez d'ores et déjà l'activer.
 
 ### Configuration d'une pipeline Drone
-Je vous invite désormais à créer un fichier à la racine de votre repository, que vous nommerez [.drone.yml](/.drone_example.yml).
+Je vous invite désormais à créer un fichier à la racine de votre repository, que vous nommerez [.drone.yml](/.drone.yml).
 
-A COMPLETER SUR SERVEUR
+Au push, Drone détectera le fichier `.drone.yml` et exécutera les tests donnés dans la section `commands`. Selon, si le(s) test(s) passe(nt), Drone renverra un `Success` ou à contrario une `Error`.
+
+##### Liens ressources
+
+https://angristan.xyz/2018/08/host-your-own-ci-cd-server-with-drone/https://raspberry-pi.fr/mettre-en-ligne-serveur-web-raspbian-dydns-port-forwarding/
+https://gist.github.com/tobydeh/e85532b358d01b45789e1c3b119620ef
+https://medium.com/faun/setup-a-drone-cicd-environment-on-docker-with-letsencrypt-69b259d398fb
 
 ## Théo
-
-## Sécuriser l'accès SSH : **RASPBERRY**
-
-https://community.gladysassistant.com/t/tutoriel-securiser-lacces-ssh-sur-votre-raspberry/2157
-
--   Demander le mot de passe pour l'utilisation de `sudo`
-
-    ```
-    $ cd /etc/sudoers.d
-    $ sudo mv 010_pi-nopasswd 010_pi-passwd
-    $ sudo vi 010_pi-passwd
-    ```
-
-    Modifier la ligne :
-
-    ```
-    pi ALL=(ALL) NOPASSWD: ALL
-    ```
-
-    En :
-
-    ```
-    pi ALL=(ALL) PASSWD: ALL
-    ```
-
--   Copier le fichier de configuration SSH (au cas ou hein)
-
-    ```
-    $ cd /etc/ssh
-    $ sudo cp sshd_config sshd_config.orig
-    ```
-
--   Dans le fichier de config `/etc/ssh/sshd_config`
-
-    -   Modifier le port d'ecoute de SSH _(22 par défaut)_ :  
-        Port SSH passé sur le port **2222**
-
-    -   Établir un temps pour se connecter :  
-        `LoginGraceTime 30` (30sec pour se connecter avant fermeture du SSH)
-
-    -   Nombre de tentative de mot de passe avant fermeture SSH :  
-        `MaxAuthTries 1` (1 erreur et SSH fermé)
-
-    -   Temps d'inactivité avant déconnexion :  
-        `ClientAliveInterval 900` (15min d'inactivité et SSH raccroche)
-
-    -   Redemarrer le service SSH
-        ```
-        sudo systemctl restart ssh
-        ```
-
----
-
--   Authentification par clés SSH
-
-    -   Sur **HOST** :
-
-        -   Créer une paire de clés publique et privé sur le host
-
-            ```
-            ssh-keygen -t rsa -b 2048 -C "Un commentaire pour vous aider à identifier votre clé"
-            ```
-
-        -   Copier la clé publique sur la raspberry
-            ```
-            cd ~/.ssh
-            scp id_rsa.pub pi@my_raspberry_ip:~/.ssh/authorized_keys
-            ```
-        -   Possibilité de se connecter a la raspberry en utilisant sa clé privé
-            ```
-            ssh pi@my_raspberry_ip -p <ssh_port> -i ~/.ssh/id_rsa
-            ```
-
-    -   Sur **RASPBERRY** :
-        -   Dans le fichier `/etc/ssh/sshd_config`
-            ```
-            PasswordAuthentication no
-            ChallengeResponseAuthentication no # this should be the default anyway
-            UsePAM no
-            ```
-        -   Redemarrer le service SSH
-            ```
-            sudo service ssh restart
-            ```
-
-    On est maintenant obligé de se connecté au serveur avec nos clés privé, sinon l'accès est refusé
-
----
-
-## Fail2ban
-
-_Permet de bannir une IP qui echoue en boucle à se connecter au serveur en ssh, à un site ..._
-
--   Installer fail2ban :
-    ```
-    sudo apt-get install fail2ban
-    ```
--   Copier le fichier `jail.conf` afin de configurer ses propres options (il ne faut pas modifier le `jail.conf` directement) :
-    ```
-    sudo cp /etc/fail2ban/jail.con /etc/fail2ban/jail.local
-    ```
--   Modifier un fichier de configuration pour surcharger la configuration de fail2ban :
-
-    ```
-    sudo nano /etc/fail2ban/jail.d/defaults-debian.conf
-    ```
-
-    ```
-    [DEFAULT] (section pour tous les plugins)
-    ignoreip = 127.0.0.1/8 XX.XX.XX.XX (son IP pour ne pas se faire bannir)
-
-    [sshd]
-    enabled = true
-    port = ssh #(le port ssh)
-    maxrtry = 5 #(nombre de tentatives avant le bannissement)
-    bantime = 600 #(temps de banissement en secondes)
-    findtime = 600 #(interval durant lequel "maxretry" sera pris en compte avant de se faire bannir son IP)
-    logpath = /var/log/auth.log #(fichier que fail2ban va regarder pour vérifier les connexions et surtout les echecs)
-
-    ```
-
--   Relancer le serveur fail2ban
-
-    ```
-    sudo systemctl restart fail2ban
-    ```
-
--   Vérifier les jails lancées
-    ```
-    sudo fail2ban-client status
-    ```
--   Vérifier les IPs ban
-    ```
-    sudo fail2ban-client sshd
-    ```
 
 ### Sécuriser l'accès SSH : **SERVEUR DEBIAN**
 
@@ -344,6 +217,143 @@ https://korben.info/tuto-ssh-securiser.html
 
 
     On est maintenant obligé de se connecté au serveur avec nos clés privé, sinon l'accès est refusé
+
+## Fail2ban
+
+_Permet de bannir une IP qui echoue en boucle à se connecter au serveur en ssh, à un site ..._
+
+-   Installer fail2ban :
+    ```
+    sudo apt-get install fail2ban
+    ```
+-   Copier le fichier `jail.conf` afin de configurer ses propres options (il ne faut pas modifier le `jail.conf` directement) :
+    ```
+    sudo cp /etc/fail2ban/jail.con /etc/fail2ban/jail.local
+    ```
+-   Modifier un fichier de configuration pour surcharger la configuration de fail2ban :
+
+    ```
+    sudo nano /etc/fail2ban/jail.d/defaults-debian.conf
+    ```
+
+    ```
+    [DEFAULT] (section pour tous les plugins)
+    ignoreip = 127.0.0.1/8 XX.XX.XX.XX (son IP pour ne pas se faire bannir)
+
+    [sshd]
+    enabled = true
+    port = ssh #(le port ssh)
+    maxrtry = 5 #(nombre de tentatives avant le bannissement)
+    bantime = 600 #(temps de banissement en secondes)
+    findtime = 600 #(interval durant lequel "maxretry" sera pris en compte avant de se faire bannir son IP)
+    logpath = /var/log/auth.log #(fichier que fail2ban va regarder pour vérifier les connexions et surtout les echecs)
+
+    ```
+
+-   Relancer le serveur fail2ban
+
+    ```
+    sudo systemctl restart fail2ban
+    ```
+
+-   Vérifier les jails lancées
+    ```
+    sudo fail2ban-client status
+    ```
+-   Vérifier les IPs ban
+    ```
+    sudo fail2ban-client sshd
+    ```
+
+#### Conguration initiale mise en place sur une Raspberry dans un réseau privé.
+
+## Sécuriser l'accès SSH : **RASPBERRY**
+
+https://community.gladysassistant.com/t/tutoriel-securiser-lacces-ssh-sur-votre-raspberry/2157
+
+-   Demander le mot de passe pour l'utilisation de `sudo`
+
+    ```
+    $ cd /etc/sudoers.d
+    $ sudo mv 010_pi-nopasswd 010_pi-passwd
+    $ sudo vi 010_pi-passwd
+    ```
+
+    Modifier la ligne :
+
+    ```
+    pi ALL=(ALL) NOPASSWD: ALL
+    ```
+
+    En :
+
+    ```
+    pi ALL=(ALL) PASSWD: ALL
+    ```
+
+-   Copier le fichier de configuration SSH (au cas ou hein)
+
+    ```
+    $ cd /etc/ssh
+    $ sudo cp sshd_config sshd_config.orig
+    ```
+
+-   Dans le fichier de config `/etc/ssh/sshd_config`
+
+    -   Modifier le port d'ecoute de SSH _(22 par défaut)_ :  
+        Port SSH passé sur le port **2222**
+
+    -   Établir un temps pour se connecter :  
+        `LoginGraceTime 30` (30sec pour se connecter avant fermeture du SSH)
+
+    -   Nombre de tentative de mot de passe avant fermeture SSH :  
+        `MaxAuthTries 1` (1 erreur et SSH fermé)
+
+    -   Temps d'inactivité avant déconnexion :  
+        `ClientAliveInterval 900` (15min d'inactivité et SSH raccroche)
+
+    -   Redemarrer le service SSH
+        ```
+        sudo systemctl restart ssh
+        ```
+
+---
+
+-   Authentification par clés SSH
+
+    -   Sur **HOST** :
+
+        -   Créer une paire de clés publique et privé sur le host
+
+            ```
+            ssh-keygen -t rsa -b 2048 -C "Un commentaire pour vous aider à identifier votre clé"
+            ```
+
+        -   Copier la clé publique sur la raspberry
+            ```
+            cd ~/.ssh
+            scp id_rsa.pub pi@my_raspberry_ip:~/.ssh/authorized_keys
+            ```
+        -   Possibilité de se connecter a la raspberry en utilisant sa clé privé
+            ```
+            ssh pi@my_raspberry_ip -p <ssh_port> -i ~/.ssh/id_rsa
+            ```
+
+    -   Sur **RASPBERRY** :
+        -   Dans le fichier `/etc/ssh/sshd_config`
+            ```
+            PasswordAuthentication no
+            ChallengeResponseAuthentication no # this should be the default anyway
+            UsePAM no
+            ```
+        -   Redemarrer le service SSH
+            ```
+            sudo service ssh restart
+            ```
+
+    On est maintenant obligé de se connecté au serveur avec nos clés privé, sinon l'accès est refusé
+
+---
 
 ## Maxime
 
